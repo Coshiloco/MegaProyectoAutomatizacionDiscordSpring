@@ -5,6 +5,7 @@ import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.lifecycle.ReadyEvent;
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
 import org.springframework.context.event.ContextClosedEvent;
@@ -15,11 +16,13 @@ import reactor.core.publisher.Mono;
 public class BotService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BotService.class);
-    private GatewayDiscordClient client;
+    private final GatewayDiscordClient client;
+    private final CommandService commandService;
 
-    // Inyectamos el GatewayDiscordClient a través del constructor
-    public BotService(GatewayDiscordClient client) {
+    @Autowired
+    public BotService(GatewayDiscordClient client, CommandService commandService) {
         this.client = client;
+        this.commandService = commandService;
         registerEventHandlers();
     }
 
@@ -29,10 +32,15 @@ public class BotService {
             return Mono.empty();
         }).subscribe();
 
-        client.on(MessageCreateEvent.class, event -> {
-            // Lógica para manejar la creación de mensajes
-            return Mono.empty();
-        }).subscribe();
+        // Procesar cada mensaje que recibe el bot
+        client.on(MessageCreateEvent.class, this::handleMessageCreateEvent).subscribe();
+    }
+
+    private Mono<Void> handleMessageCreateEvent(MessageCreateEvent event) {
+        return Mono.just(event)
+                .filter(e -> e.getMessage().getAuthor().map(user -> !user.isBot()).orElse(false))
+                .flatMap(e -> commandService.processCommand(e.getMessage()))
+                .then();
     }
 
     @EventListener(ContextClosedEvent.class)
