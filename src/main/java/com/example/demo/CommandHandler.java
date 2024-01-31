@@ -19,9 +19,15 @@ public class CommandHandler {
     @Autowired
     private PingCommand pingCommand; // Asume que PingCommand está anotado con @Component
 
+    @Autowired
+    private RoleCommand roleCommand;
+
+
+
     @PostConstruct
     public void init() {
         registerCommand(pingCommand);
+        registerCommand(roleCommand);
     }
 
     public void registerCommand(Command command) {
