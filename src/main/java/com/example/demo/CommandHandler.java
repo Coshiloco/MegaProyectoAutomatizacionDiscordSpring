@@ -22,12 +22,16 @@ public class CommandHandler {
     @Autowired
     private RoleCommand roleCommand;
 
+    @Autowired
+    private UserInfoCommand userInfoCommand;
+
 
 
     @PostConstruct
     public void init() {
         registerCommand(pingCommand);
         registerCommand(roleCommand);
+        registerCommand(userInfoCommand);
     }
 
     public void registerCommand(Command command) {
