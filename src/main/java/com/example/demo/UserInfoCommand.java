@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import java.time.Duration;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -98,6 +99,14 @@ public class UserInfoCommand implements Command {
         // Since discriminatorValue is not deprecated, you can use it directly
         String discriminator = user.getDiscriminator(); // Even though it's deprecated, if no alternative exists yet, this is what you use.
 
+        // Time in Server
+        Duration timeInServer = Duration.between(member.getJoinTime().orElse(Instant.now()), Instant.now());
+        long days = timeInServer.toDays();
+        long hours = timeInServer.toHours() % 24;
+        long minutes = timeInServer.toMinutes() % 60;
+        long seconds = timeInServer.getSeconds() % 60;
+        String formattedTimeInServer = String.format("%d días %02d horas %02d minutos %02d segundos", days, hours, minutes, seconds);
+
         // Combine everything into a reactive chain
         return Mono.zip(Mono.just(formattedCreationDate), Mono.just(formattedJoinDate), rolesMono, statusMono)
                 .map(tuple -> {
@@ -111,7 +120,8 @@ public class UserInfoCommand implements Command {
                             "Status: " + status + "\n" +
                             "Roles: " + roles + "\n" +
                             "Account Creation Date: " + tuple.getT1() + "\n" +
-                            "Server Join Date: " + tuple.getT2() + "\n";
+                            "Server Join Date: " + tuple.getT2() + "\n"
+                            + "Time in Server: " + formattedTimeInServer + "\n";
                 })
                 .block(); // Finally block to resolve the Mono to a String
     }
