@@ -3,18 +3,27 @@ package com.example.demo;
 import discord4j.common.util.Snowflake;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.object.entity.Guild;
+import discord4j.core.object.entity.Member;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.User;
 import discord4j.core.object.entity.channel.TextChannel;
+import discord4j.core.object.presence.Presence;
+import discord4j.core.object.entity.Role;
+import discord4j.rest.util.Color;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.time.Instant;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeParseException;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
-import java.time.ZoneId;
+import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Component
 public class UserInfoCommand implements Command {
@@ -50,32 +59,75 @@ public class UserInfoCommand implements Command {
         Snowflake userId = Snowflake.of(userIdString);
 
         return message.getGuild()
-                .flatMap(guild -> client.getUserById(userId)
-                        .flatMap(user -> createOrGetChannel(guild, "informacion-usuarios")
-                                .flatMap(channel -> {
-                                    String info = formatUserInfo(user);
-                                    return channel.createMessage(info);
-                                })))
+                .flatMap(guild -> guild.getMemberById(userId)
+                        .flatMap(member -> client.getUserById(userId)
+                                .flatMap(user -> createOrGetChannel(guild, "informacion-usuarios")
+                                        .flatMap(channel -> {
+                                            String info = formatUserInfo(guild, user, member);
+                                            return channel.createMessage(info);
+                                        }))))
                 .then();
     }
 
-    private String formatUserInfo(User user) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL).withLocale(Locale.ENGLISH);
-        ZonedDateTime creationDate = user.getId().getTimestamp().atZone(ZoneId.systemDefault());
-        String formattedDate = creationDate.format(formatter);
+    private String formatUserInfo(Guild guild, User user, Member member) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL)
+                .withLocale(Locale.ENGLISH);
 
-        return "User Information:\n" +
-                "ID: " + user.getId().asString() + "\n" +
-                "Username: " + user.getUsername() + "\n" +
-                "Avatar URL: " + user.getAvatarUrl() + "\n" +
-                "Account Creation Date: " + formattedDate + "\n";
+        // User's creation date
+        ZonedDateTime creationDate = Instant.ofEpochMilli(user.getId().getTimestamp().toEpochMilli())
+                .atZone(ZoneId.systemDefault());
+        String formattedCreationDate = creationDate.format(formatter);
+
+        // Member's join date
+        String formattedJoinDate = member.getJoinTime()
+                .map(time -> ZonedDateTime.ofInstant(time, ZoneId.systemDefault()).format(formatter))
+                .orElse("Unknown");
+
+        // Member's roles, resolving the roles into a string needs to be done in a reactive chain
+        Mono<String> rolesMono = member.getRoles()
+                .map(Role::getName)
+                .collect(Collectors.joining(", "))
+                .defaultIfEmpty("No roles");
+
+        // User's status, this needs to be done reactively
+        Mono<String> statusMono = member.getPresence()
+                .map(Presence::getStatus)
+                .map(Object::toString)
+                .defaultIfEmpty("Unknown");
+
+        // Since discriminatorValue is not deprecated, you can use it directly
+        String discriminator = user.getDiscriminator(); // Even though it's deprecated, if no alternative exists yet, this is what you use.
+
+        // Combine everything into a reactive chain
+        return Mono.zip(Mono.just(formattedCreationDate), Mono.just(formattedJoinDate), rolesMono, statusMono)
+                .map(tuple -> {
+                    String roles = tuple.getT3();
+                    String status = tuple.getT4();
+                    return "User Information:\n" +
+                            "ID: " + user.getId().asString() + "\n" +
+                            "Username: " + user.getUsername() + "#" + discriminator + "\n" +
+                            "Avatar URL: " + user.getAvatarUrl() + "\n" +
+                            "Is Bot: " + user.isBot() + "\n" +
+                            "Status: " + status + "\n" +
+                            "Roles: " + roles + "\n" +
+                            "Account Creation Date: " + tuple.getT1() + "\n" +
+                            "Server Join Date: " + tuple.getT2() + "\n";
+                })
+                .block(); // Finally block to resolve the Mono to a String
     }
+
+
 
     private Mono<TextChannel> createOrGetChannel(Guild guild, String channelName) {
         return guild.getChannels()
                 .ofType(TextChannel.class)
                 .filter(channel -> channel.getName().equalsIgnoreCase(channelName))
                 .next()
-                .switchIfEmpty(guild.createTextChannel(spec -> spec.setName(channelName)));
+                .switchIfEmpty(guild.createTextChannel(channelName)
+                        .doOnRequest(ignored -> {/* Aquí puedes realizar acciones adicionales si es necesario */})
+                        .cast(TextChannel.class));
     }
+
+
+
 }
