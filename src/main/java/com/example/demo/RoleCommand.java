@@ -70,6 +70,8 @@ public class RoleCommand implements Command {
                 .ofType(TextChannel.class)
                 .filter(channel -> channel.getName().equalsIgnoreCase(channelName))
                 .next()
-                .switchIfEmpty(guild.createTextChannel(spec -> spec.setName(channelName)));
+                .switchIfEmpty(guild.createTextChannel(channelName)
+                        .doOnRequest(ignored -> {/* Aquí puedes realizar acciones adicionales si es necesario */})
+                        .cast(TextChannel.class));
     }
 }
