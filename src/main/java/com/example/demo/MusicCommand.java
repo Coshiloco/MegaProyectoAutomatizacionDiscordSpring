@@ -74,9 +74,36 @@ public class MusicCommand implements Command {
     }
 
     private Mono<Void> playTrack(Message message, String trackUrl) {
-        // Implementation for playTrack...
-        return Mono.empty();
+        return Mono.justOrEmpty(message.getGuildId())
+                .flatMap(guildId -> {
+                    return Mono.create(sink -> playerManager.loadItemOrdered(guildId, trackUrl, new AudioLoadResultHandler() {
+                        @Override
+                        public void trackLoaded(AudioTrack track) {
+                            scheduler.queue(track);
+                            sink.success();
+                        }
+
+                        @Override
+                        public void playlistLoaded(AudioPlaylist playlist) {
+                            var firstTrack = playlist.getSelectedTrack() != null ? playlist.getSelectedTrack() : playlist.getTracks().get(0);
+                            scheduler.queue(firstTrack);
+                            sink.success();
+                        }
+
+                        @Override
+                        public void noMatches() {
+                            sink.error(new IllegalArgumentException("No matches found for " + trackUrl));
+                        }
+
+                        @Override
+                        public void loadFailed(FriendlyException exception) {
+                            sink.error(exception);
+                        }
+                    }));
+                })
+                .then();
     }
+
 
     private Mono<Void> handleUnknownSubcommand(Message message) {
         // Implementation for handling unknown subcommands...
