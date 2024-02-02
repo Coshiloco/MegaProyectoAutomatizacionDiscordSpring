@@ -25,6 +25,9 @@ public class CommandHandler {
     @Autowired
     private UserInfoCommand userInfoCommand;
 
+    @Autowired
+    private MusicCommand musicCommand;
+
 
 
     @PostConstruct
@@ -32,6 +35,7 @@ public class CommandHandler {
         registerCommand(pingCommand);
         registerCommand(roleCommand);
         registerCommand(userInfoCommand);
+        registerCommand(musicCommand);
     }
 
     public void registerCommand(Command command) {
