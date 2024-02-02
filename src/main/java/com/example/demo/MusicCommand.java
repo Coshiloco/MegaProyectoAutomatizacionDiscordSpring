@@ -26,24 +26,23 @@ public class MusicCommand implements Command {
     private final AudioPlayerManager playerManager;
     private final AudioProvider provider;
     private final TrackScheduler scheduler;
+    private final AudioPlayer player; // Declaración del campo faltante
 
-    private final AudioPlayer player;
+
+    @Override
+    public String getName() {
+        return "music";
+    }
 
     @Autowired
     public MusicCommand(GatewayDiscordClient client) {
         this.client = client;
         this.playerManager = new DefaultAudioPlayerManager();
-        playerManager.getConfiguration()
-                .setFrameBufferFactory(NonAllocatingAudioFrameBuffer::new);
         AudioSourceManagers.registerRemoteSources(playerManager);
-        this.player = playerManager.createPlayer();
-        this.provider = new LavaPlayerAudioProvider(player);
-        this.scheduler = new TrackScheduler(player);
-    }
-
-    @Override
-    public String getName() {
-        return "music";
+        this.playerManager.getConfiguration().setFrameBufferFactory(NonAllocatingAudioFrameBuffer::new);
+        this.player = playerManager.createPlayer(); // Inicialización correcta del campo
+        this.provider = new LavaPlayerAudioProvider(this.player);
+        this.scheduler = new TrackScheduler(this.player);
     }
 
     @Override
@@ -53,17 +52,40 @@ public class MusicCommand implements Command {
             return Mono.empty();
         }
 
-        return switch (parts[1].toLowerCase()) {
-            case "join" -> joinChannel(message);
+        String command = parts[1].toLowerCase();
+        switch (command) {
+            case "join" -> {
+                return joinChannel(message);
+            }
             case "play" -> {
                 if (parts.length < 3) {
-                    yield Mono.empty();
+                    return Mono.empty();
                 }
-                yield playTrack(message, parts[2]); // URL is missing
+                return playTrack(message, parts[2]);
             }
-            default -> handleUnknownSubcommand(message);
-        };
+            case "pause" -> {
+                scheduler.pause();
+                return Mono.empty();
+            }
+            case "resume" -> {
+                scheduler.resume();
+                return Mono.empty();
+            }
+            case "stop" -> {
+                scheduler.stop();
+                return Mono.empty();
+            }
+            case "skip" -> {
+                scheduler.skip();
+                return Mono.empty();
+            }
+            default -> {
+                return handleUnknownSubcommand(message);
+            }
+        }
     }
+
+
 
     private Mono<Void> joinChannel(Message message) {
         return message.getAuthorAsMember()
