@@ -1,16 +1,14 @@
 package com.example.demo;
 
 
-import com.example.demo.Command;
+import discord4j.core.object.entity.Message;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
-import discord4j.core.object.entity.Message;
-
-import java.util.HashMap;
-import java.util.Map;
 
 import javax.annotation.PostConstruct;
-import org.springframework.beans.factory.annotation.Autowired;
+import java.util.HashMap;
+import java.util.Map;
 
 @Component
 public class CommandHandler {

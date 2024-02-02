@@ -3,7 +3,6 @@ package com.example.demo;
 import discord4j.core.object.entity.Message;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
-import com.example.demo.Command;
 
 @Component
 public class PingCommand implements Command {

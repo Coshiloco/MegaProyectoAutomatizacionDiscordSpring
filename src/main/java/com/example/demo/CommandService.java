@@ -1,7 +1,6 @@
 package com.example.demo;
 
 
-import com.example.demo.CommandHandler;
 import discord4j.core.object.entity.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
