@@ -127,6 +127,33 @@ public class MusicCommand implements Command {
     }
 
 
+    public void playTrackFromURL(String trackUrl) {
+        playerManager.loadItemOrdered(player, trackUrl, new AudioLoadResultHandler() {
+            @Override
+            public void trackLoaded(AudioTrack track) {
+                scheduler.queue(track);
+            }
+
+            @Override
+            public void playlistLoaded(AudioPlaylist playlist) {
+                for (AudioTrack track : playlist.getTracks()) {
+                    scheduler.queue(track);
+                }
+            }
+
+            @Override
+            public void noMatches() {
+                // Manejar el caso en que no se encuentren coincidencias para la URL
+            }
+
+            @Override
+            public void loadFailed(FriendlyException exception) {
+                // Manejar fallos en la carga de la pista
+            }
+        });
+    }
+
+
     private Mono<Void> handleUnknownSubcommand(Message message) {
         // Implementation for handling unknown subcommands...
         return Mono.empty();

@@ -7,8 +7,8 @@ import discord4j.core.DiscordClientBuilder;
 import discord4j.core.GatewayDiscordClient;
 import javafx.application.Application;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 
@@ -18,10 +18,10 @@ public class DiscordAutomatizacionServerApplication {
 	@Value("${bot.token}")
 	private String token;
 
-	private static String[] savedArgs;
+	private static ConfigurableApplicationContext context;
 
 	public static void main(String[] args) {
-		savedArgs = args;
+		context = SpringApplication.run(DiscordAutomatizacionServerApplication.class, args);
 		Application.launch(MusicPlayerGUI.class, args);
 	}
 
@@ -33,11 +33,6 @@ public class DiscordAutomatizacionServerApplication {
 				.block();
 	}
 
-	static ConfigurableApplicationContext runSpringApplication() {
-		return new SpringApplicationBuilder(DiscordAutomatizacionServerApplication.class)
-				.run(savedArgs);
-	}
-
 	@Bean
 	public AudioPlayerManager audioPlayerManager() {
 		return new DefaultAudioPlayerManager();
@@ -45,6 +40,11 @@ public class DiscordAutomatizacionServerApplication {
 
 	@Bean
 	public AudioPlayer audioPlayer(AudioPlayerManager audioPlayerManager) {
+		// This bean is required by TrackScheduler and was missing
 		return audioPlayerManager.createPlayer();
+	}
+
+	public static ConfigurableApplicationContext getContext() {
+		return context;
 	}
 }

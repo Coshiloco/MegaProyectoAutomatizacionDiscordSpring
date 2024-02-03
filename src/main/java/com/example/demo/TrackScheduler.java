@@ -34,14 +34,17 @@ public class TrackScheduler implements AudioLoadResultHandler {
 
     // Métodos expuestos para la GUI
     public void pause() {
+        System.out.println("Pause button clicked");
         player.setPaused(true);
     }
 
     public void resume() {
+        System.out.println("Resume button clicked");
         player.setPaused(false);
     }
 
     public void stop() {
+        System.out.println("Stop button clicked");
         queue.clear();
         player.stopTrack();
         // Asumiendo que queremos también resetear el estado de pausa
@@ -50,6 +53,7 @@ public class TrackScheduler implements AudioLoadResultHandler {
 
 
     public void skip() {
+        System.out.println("Skip button clicked");
         nextTrack();
     }
 
