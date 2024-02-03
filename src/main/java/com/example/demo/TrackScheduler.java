@@ -35,8 +35,18 @@ public class TrackScheduler implements AudioLoadResultHandler {
     // Métodos expuestos para la GUI
     public void pause() {
         System.out.println("Pause button clicked");
-        player.setPaused(true);
+        if (!player.isPaused()) {
+            player.setPaused(true);
+            if (player.isPaused()) {
+                System.out.println("Player is now paused");
+            } else {
+                System.out.println("Failed to pause the player");
+            }
+        } else {
+            System.out.println("Player was already paused");
+        }
     }
+
 
     public void resume() {
         System.out.println("Resume button clicked");
@@ -45,17 +55,29 @@ public class TrackScheduler implements AudioLoadResultHandler {
 
     public void stop() {
         System.out.println("Stop button clicked");
-        queue.clear();
-        player.stopTrack();
-        // Asumiendo que queremos también resetear el estado de pausa
-        player.setPaused(false);
+        if (!queue.isEmpty() || player.getPlayingTrack() != null) {
+            queue.clear();
+            player.stopTrack();
+            player.setPaused(false); // Esto asegura que el estado de pausa se resetea
+            System.out.println("Playback has been stopped and the queue has been cleared.");
+        } else {
+            System.out.println("There was nothing to stop. The queue was empty and no track was playing.");
+        }
     }
+
 
 
     public void skip() {
         System.out.println("Skip button clicked");
-        nextTrack();
+        if (!queue.isEmpty() || player.getPlayingTrack() != null) {
+            AudioTrack playingTrack = player.getPlayingTrack();
+            nextTrack();
+            System.out.println("Skipped track: " + (playingTrack != null ? playingTrack.getInfo().title : "No track was playing."));
+        } else {
+            System.out.println("There was no track to skip.");
+        }
     }
+
 
     @Override
     public void trackLoaded(AudioTrack track) {
