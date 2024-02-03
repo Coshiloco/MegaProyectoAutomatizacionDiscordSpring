@@ -29,6 +29,10 @@ public class MusicCommand implements Command {
     private final AudioPlayer player; // Declaración del campo faltante
 
 
+    public TrackScheduler getScheduler() {
+        return scheduler;
+    }
+
     @Override
     public String getName() {
         return "music";

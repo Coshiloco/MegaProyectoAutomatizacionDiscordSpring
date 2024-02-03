@@ -24,6 +24,7 @@ public class MusicPlayerGUI extends Application {
         trackUrlField.setPromptText("Enter track URL here");
         Button playButton = new Button("Play");
         Button pauseButton = new Button("Pause");
+        Button resumeButton = new Button("Resume");
         Button skipButton = new Button("Skip");
         Button stopButton = new Button("Stop");
 
@@ -33,11 +34,12 @@ public class MusicPlayerGUI extends Application {
                 musicCommand.playTrackFromURL(trackUrl); // Implementa este método en MusicCommand
             }
         });
-        pauseButton.setOnAction(event -> scheduler.pause());
-        skipButton.setOnAction(event -> scheduler.skip());
-        stopButton.setOnAction(event -> scheduler.stop());
+        pauseButton.setOnAction(event -> musicCommand.getScheduler().pause());
+        skipButton.setOnAction(event -> musicCommand.getScheduler().skip());
+        stopButton.setOnAction(event -> musicCommand.getScheduler().stop());
+        resumeButton.setOnAction(event -> musicCommand.getScheduler().resume());
 
-        root.getChildren().addAll(trackUrlField, playButton, pauseButton, skipButton, stopButton);
+        root.getChildren().addAll(trackUrlField, playButton, pauseButton, skipButton, stopButton, resumeButton);
         Scene scene = new Scene(root, 400, 200);
         primaryStage.setTitle("Discord Music Bot Control");
         primaryStage.setScene(scene);
