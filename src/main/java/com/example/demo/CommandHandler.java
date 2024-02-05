@@ -27,6 +27,10 @@ public class CommandHandler {
     private MusicCommand musicCommand;
 
 
+    @Autowired
+    private TalkWithIA talkWithIA;
+
+
 
     @PostConstruct
     public void init() {
@@ -34,6 +38,7 @@ public class CommandHandler {
         registerCommand(roleCommand);
         registerCommand(userInfoCommand);
         registerCommand(musicCommand);
+        registerCommand(talkWithIA);
     }
 
     public void registerCommand(Command command) {
